@@ -78,8 +78,7 @@ class CustomUrl extends FormElement {
       $form_state->setError($element, t('The External URL %url is not valid.', ['%url' => $value]));
     }
     // Validate internal url : Should be Like /node/nid
-    dpm($value);
-    if ($value !== '' && !self::isInternalUrlValid($value)) {
+    if ($value !== '' && !UrlHelper::isExternal($value) && !self::isInternalUrlValid($value)) {
       $form_state->setError($element, t('The Internal URL %url is not valid.', ['%url' => $value]));
     }
   }
@@ -88,37 +87,22 @@ class CustomUrl extends FormElement {
    * {@inheritdoc}
    */
   public static function valueCallback(&$element, $input, FormStateInterface $form_state) {
-    /*   if ($input !== FALSE && $input !== NULL) {
-          if (UrlHelper::isExternal($input)) {
-            var_dump('isExternal');
-            return $input;
-          }
-          elseif (!UrlHelper::isExternal($input) && self::isInternalUrlValid($input)) {
-            //var_dump($input);die;
-            var_dump('isInternal and valid ');
-            return Url::fromUserInput($input, ['absolute' => 'true'])->toString();
-          }
-          else {
-            var_dump('isInternal and not valid ');
-            return NULL;
-          }
+    if ($input !== FALSE && $input !== NULL) {
+      try {
+        if (self::isInternalUrlValid($input)) {
+          return Url::fromUserInput($input, ['absolute' => 'true'])->toString();
         }
-        return NULL;*/
-    try {
-      if (self::isInternalUrlValid($input)){
-        dpm();
-        return Url::fromUserInput($input, ['absolute' => 'true'])->toString();
-      }else{
-        return $input;
+        else {
+          return $input;
+        }
+      } catch (InvalidArgumentException $argumentException) {
+        return NULL;
       }
-    } catch (InvalidArgumentException $argumentException) {
-      return NULL;
     }
+
+    return NULL;
   }
 
-  /*  public static function getValue(){
-      return
-  }*/
   /**
    * Prepares a #type 'url' render element for input.html.twig.
    *
